@@ -31,31 +31,31 @@ def print_data(data):
 
 
 def request(args):
-    if args.add:
-        visibility = args.visibility if args.visibility else 'private'
-        file_name = args.file_name if args.file_name else None
+    visibility = args.visibility if args.visibility else 'private'
 
-        data = {
-                "visibility": visibility,
-                "files": [
-                    {
-                        "filename": file_name,
-                        "contents": args.add
-                        }
-                    ]
-                }
+    data = dict()
+    data['visibility'] = visibility
+    if args.file or args.add:
+        files = list()
 
+        if args.file:
+            for f in args.file:
+                with open(f, 'r') as reader:
+                    content = reader.read()
+                    name = f
+                    files.append({"filename":name, "contents": content})
+
+        if args.add:
+            name = args.name if args.name else None
+            content = args.add
+            files.append({"filename":name, "contents": content})
+
+        data['files'] = files
         data = json.dumps(data)
-        try:
-            r = requests.post(endpoint, headers=headers, data=data)
-        except requests.exceptions.RequestException as e:
-            raise Exception(e)
-
+        r = requests.post(endpoint, headers=headers, data=data)
+ 
     else:
-        try:
-            r = requests.get(endpoint, headers=headers)
-        except requests.exceptions.RequestException as e:
-            raise Exception(e)
+        r = requests.get(endpoint, headers=headers)
 
     return r
 
@@ -68,9 +68,11 @@ def main():
     arg_parser.add_argument('-a', '--add', help='add contents',
             metavar='CONTENTS', type=str)
 
-
-    arg_parser.add_argument('-n', '--file-name', help='file name',
+    arg_parser.add_argument('-n', '--name', help='file-name',
             metavar='NAME', type=str,)
+
+    arg_parser.add_argument('-f', '--file', help='location of dest file/s',
+            metavar='FILES', type=str, nargs='+')
 
     arg_parser.add_argument('-v', '--visibility', help='public, private, or unlisted',
             metavar='VISIBILITY', type=str)
@@ -89,7 +91,7 @@ def main():
             raise Exception(str(r.json()["errors"]))
 
     except Exception as e:
-        err = format("ERROR: " +bcolors.FAIL + str(e) + bcolors.ENDC)
+        err = format(bcolors.FAIL + "ERROR: " + bcolors.ENDC + str(e) )
         print(err)
 
 
