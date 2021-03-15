@@ -10,20 +10,25 @@ class bcolors:
     ENDC = '\033[0m'
 
 
-access_token = '##########'
-url = 'https://paste.sr.ht/api/pastes'
+access_token = '#######'
+url = 'https://paste.sr.ht'
+endpoint = url + '/api/pastes'
+
 headers = {"Authorization":"token {}".format(access_token), "Content-Type": "application/json"}
 
 
 def print_data(data):
+    print(data)
     for d in data:
+        link =  url + d['user']['canonical_name'] + d['sha']
         print(bcolors.CYAN,
                 d['visibility'],
                 bcolors.ENDC,
-                'sha: ', d['sha'])
-        print("files:")
+                link
+                )
+        print("  files:")
         for f in d['files']:
-            print( '- ', f['filename'])
+            print( ' - ', f['filename'])
 
 
 def request(args):
@@ -43,13 +48,13 @@ def request(args):
 
         data = json.dumps(data)
         try:
-            r = requests.post(url, headers=headers, data=data)
+            r = requests.post(endpoint, headers=headers, data=data)
         except requests.exceptions.RequestException as e:
             raise Exception(e)
 
     else:
         try:
-            r = requests.get(url, headers=headers)
+            r = requests.get(endpoint, headers=headers)
         except requests.exceptions.RequestException as e:
             raise Exception(e)
 
