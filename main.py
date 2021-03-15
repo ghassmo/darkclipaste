@@ -19,7 +19,7 @@ headers = {"Authorization":"token {}".format(access_token), "Content-Type": "app
 
 def print_data(data):
     for d in data:
-        link =  url + '/' + d['user']['canonical_name'] + d['sha']
+        link =  url + '/' + d['user']['canonical_name'] + '/' + d['sha']
         print(bcolors.CYAN,
                 d['visibility'],
                 bcolors.ENDC,
