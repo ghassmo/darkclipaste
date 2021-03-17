@@ -17,7 +17,7 @@ endpoint = url + '/api/pastes'
 headers = {"Authorization":"token {}".format(access_token), "Content-Type": "application/json"}
 
 
-def print_data(data):
+def show_pastes(data):
     for d in data:
         link =  url + '/' + d['user']['canonical_name'] + '/' + d['sha']
         print(bcolors.CYAN,
@@ -25,9 +25,16 @@ def print_data(data):
                 bcolors.ENDC,
                 link
                 )
-        print("  files:")
+        
+        print(' created: ', d['created'])
+        print(' files:')
         for f in d['files']:
             print( ' - ', f['filename'])
+            print( '     blob_id: ', f['blob_id'])
+
+
+def show_paste(data):
+    print(data['contents'])
 
 
 def request(args):
@@ -53,7 +60,13 @@ def request(args):
         data['files'] = files
         data = json.dumps(data)
         r = requests.post(endpoint, headers=headers, data=data)
- 
+
+    elif args.delete:
+        _endpoint = endpoint + "/{}".format(args.delete)
+        r = requests.delete(_endpoint, headers=headers)
+    elif args.show:
+        _endpoint = url + "/api/blobs/{}".format(args.show)
+        r = requests.get(_endpoint, headers=headers)
     else:
         r = requests.get(endpoint, headers=headers)
 
@@ -77,15 +90,27 @@ def main():
     arg_parser.add_argument('-v', '--visibility', help='public, private, or unlisted',
             metavar='VISIBILITY', type=str)
 
+    arg_parser.add_argument('-s', '--show', help='show paste',
+            metavar='BLOB_ID', type=str)
+
+    arg_parser.add_argument('-d', '--delete', help='delete paste',
+            metavar='SHA', type=str)
+
+
 
     args = arg_parser.parse_args()
 
     try:
         r = request(args)
         if r.status_code == 200:
-            print_data(r.json()["results"])
+            if args.show:
+                show_paste(r.json())
+            else:
+                show_pastes(r.json()["results"])
         elif r.status_code == 201:
             print(bcolors.CYAN , "created successfully", bcolors.ENDC)
+        elif r.status_code == 204:
+            print(bcolors.CYAN , "processed successfully", bcolors.ENDC)
         else:
             print("status code:", r.status_code)
             raise Exception(str(r.json()["errors"]))
